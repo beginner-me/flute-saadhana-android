@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flute Saadhana — D# Shruthi</title>
+<style>
+  :root { --ink:#202438; --muted:#72778b; --paper:#fffdf8; --purple:#6657d9; --green:#18a66a; --line:#e8e6f0; }
+  * { box-sizing:border-box }
+  body { margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif; background:linear-gradient(145deg,#f5f2ff,#fffdf8 58%,#eefaf5); color:var(--ink); min-height:100vh; }
+  main { width:min(920px,94vw); margin:0 auto; padding:34px 0 44px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+  .brand { font-weight:800; letter-spacing:-.04em; font-size:1.2rem; }
+  .brand span { color:var(--purple) }
+  .pill { border:1px solid #ded9ff; background:#f1eeff; color:#5747c8; border-radius:999px; padding:8px 12px; font-size:.85rem; font-weight:700; }
+  .intro { text-align:center; margin:12px auto 28px; }
+  h1 { font-size:clamp(2rem,5vw,3.3rem); line-height:1.05; letter-spacing:-.055em; margin:0 0 12px; }
+  .intro p { color:var(--muted); margin:0; font-size:1.02rem; }
+  .panel { background:rgba(255,255,255,.88); border:1px solid rgba(225,222,239,.9); border-radius:24px; padding:clamp(18px,4vw,32px); box-shadow:0 18px 50px #3930640b; }
+  .settings { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:26px; }
+  .setting { border:1px solid var(--line); border-radius:14px; padding:11px 18px; background:#fff; min-width:130px; text-align:center; }
+  .setting small { display:block; color:var(--muted); font-size:.75rem; margin-bottom:4px; }
+  .setting strong { font-size:1.08rem; }
+  .progress-head { display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--muted); font-size:.88rem; margin-bottom:12px; }
+  .track { height:6px; border-radius:99px; background:#eeedf5; overflow:hidden; margin-bottom:26px; }
+  .bar { height:100%; width:0%; background:var(--purple); transition:width .25s ease; }
+  .notes { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:9px; margin-bottom:24px; }
+  .note { border:1.5px solid var(--line); border-radius:16px; padding:15px 2px 13px; text-align:center; background:#fff; transition:all .18s; }
+  .note b { display:block; font-size:clamp(1.1rem,3vw,1.5rem); }
+  .note small { color:var(--muted); font-size:.68rem; display:block; margin-top:5px; }
+  .note.active { border-color:var(--purple); background:#f4f1ff; box-shadow:0 0 0 3px #6657d91a; transform:translateY(-2px); }
+  .note.done { background:#e7fbf1; border-color:#7bd9ae; color:#087c4b; }
+  .note.done small { color:#16855a; }
+  .center { text-align:center; }
+  .target-label { color:var(--muted); font-size:.86rem; margin-bottom:6px; }
+  .target { font-size:clamp(3.4rem,10vw,5.4rem); line-height:1; font-weight:850; letter-spacing:-.06em; margin:0; }
+  .target-sub { margin:10px 0 18px; color:var(--muted); }
+  .feedback { min-height:28px; font-weight:750; color:var(--muted); margin:12px 0 18px; }
+  .feedback.good { color:var(--green); }
+  .feedback.bad { color:#bd6a22; }
+  .meter { width:min(390px,100%); height:9px; background:#eeedf5; border-radius:99px; margin:0 auto 22px; overflow:hidden; }
+  .meter-fill { height:100%; width:0%; background:var(--green); transition:width .12s; }
+  button { border:0; border-radius:14px; padding:14px 22px; font:inherit; font-weight:750; cursor:pointer; transition:transform .15s,opacity .15s; }
+  button:hover { transform:translateY(-1px) }
+  .primary { background:var(--purple); color:white; box-shadow:0 8px 18px #6657d933; }
+  .secondary { background:#f2f0fb; color:#5044b5; }
+  button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .hint { font-size:.8rem; line-height:1.5; color:var(--muted); text-align:center; max-width:600px; margin:20px auto 0; }
+  .status { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; color:var(--muted); margin-top:18px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#b7b6c5; }
+  .dot.live { background:var(--green); box-shadow:0 0 0 4px #18a66a20; }
+  @media(max-width:560px) { main{padding-top:22px}.notes{grid-template-columns:repeat(4,minmax(0,1fr))}.note{padding:12px 2px}.panel{border-radius:20px} }
+</style>
+</head>
+<body>
+<main>
+  <header><div class="brand">♪ <span>Flute Saadhana</span></div><div class="pill">SHRUTHI · D#</div></header>
+  <section class="intro">
+    <h1>Find your note.<br>Play with confidence.</h1>
+    <p>Play the swara on your flute. Match the pitch to turn the note green.</p>
+  </section>
+  <section class="panel">
+    <div class="settings">
+      <div class="setting"><small>SHRUTHI</small><strong>D# (Sa)</strong></div>
+      <div class="setting"><small>TEMPO</small><strong>♩ 60 BPM</strong></div>
+      <div class="setting"><small>SEQUENCE</small><strong>S R G M P D N S</strong></div>
+    </div>
+    <div class="progress-head"><span>Your swara journey</span><strong id="count">0 / 8 correct</strong></div>
+    <div class="track"><div class="bar" id="progress"></div></div>
+    <div class="notes" id="notes"></div>
+    <div class="center">
+      <div class="target-label">PLAY THIS SWARA</div>
+      <p class="target" id="target">S</p>
+      <div class="target-sub" id="targetSub">D#4 · Sa</div>
+      <div class="meter"><div class="meter-fill" id="meter"></div></div>
+      <div class="feedback" id="feedback">Press “Start listening” and play a clear, steady note.</div>
+      <div class="actions">
+        <button class="primary" id="start">Start listening</button>
+        <button class="secondary" id="reset">Start again</button>
+      </div>
+      <div class="status"><span class="dot" id="dot"></span><span id="status">Microphone is off</span></div>
+    </div>
+  </section>
+  <p class="hint">Use headphones only if they don't block your flute sound; keep your flute close to the microphone and play one note at a time. Allow microphone access when your browser asks. Pitch detection works best in a quiet room. This page listens locally in your browser.</p>
+</main>
+<script>
+(() => {
+  // D# as Sa; relative swaras use semitone offsets 0, 2, 4, 5, 7, 9, 11, 12.
+  const swaras = [
+    {name:'S', full:'Sa', offset:0}, {name:'R', full:'Ri', offset:2},
+    {name:'G', full:'Ga', offset:4}, {name:'M', full:'Ma', offset:5},
+    {name:'P', full:'Pa', offset:7}, {name:'D', full:'Dha', offset:9},
+    {name:'N', full:'Ni', offset:11}, {name:'S', full:'Sa', offset:12}
+  ];
+  const rootMidi = 63; // D#4
+  const names = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+  let current = 0, audioContext, analyser, source, stream, raf, stableFrames = 0, listening = false, lastMatch = false;
+  const $ = id => document.getElementById(id);
+  const noteWrap = $('notes');
+
+  function midiName(midi) {
+    const n = ((midi % 12) + 12) % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    return names[n] + octave;
+  }
+  function frequency(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+  function renderNotes() {
+    noteWrap.innerHTML = '';
+    swaras.forEach((s, i) => {
+      const el = document.createElement('div');
+      el.className = 'note' + (i < current ? ' done' : '') + (i === current && current < 8 ? ' active' : '');
+      el.innerHTML = `<b>${s.name}</b><small>${names[((rootMidi+s.offset)%12+12)%12]}</small>`;
+      noteWrap.appendChild(el);
+    });
+    $('count').textContent = `${current} / 8 correct`;
+    $('progress').style.width = `${current/8*100}%`;
+    if (current >= 8) {
+      $('target').textContent = '🎉';
+      $('targetSub').textContent = 'All swaras completed!';
+      $('feedback').textContent = 'Excellent! You played the full sequence correctly.';
+      $('feedback').className = 'feedback good';
+      $('start').textContent = listening ? 'Listening…' : 'Start listening';
+      $('start').disabled = true;
+    } else {
+      $('target').textContent = swaras[current].name;
+      $('targetSub').textContent = `${names[((rootMidi+swaras[current].offset)%12+12)%12]} · ${swaras[current].full}`;
+      $('start').disabled = false;
+    }
+  }
+  function setFeedback(text, cls='') { $('feedback').textContent = text; $('feedback').className = 'feedback' + (cls ? ' '+cls : ''); }
+  function autoCorrelate(buf, sampleRate) {
+    let size = buf.length, rms = 0;
+    for (let i=0;i<size;i++) rms += buf[i]*buf[i];
+    rms = Math.sqrt(rms/size);
+    if (rms < 0.012) return -1;
+    let r1=0, r2=size-1, threshold=0.2;
+    for (let i=0;i<size/2;i++) { if (Math.abs(buf[i])<threshold) { r1=i; break; } }
+    for (let i=1;i<size/2;i++) { if (Math.abs(buf[size-i])<threshold) { r2=size-i; break; } }
+    buf = buf.slice(r1,r2); size = buf.length;
+    if (size < 2) return -1;
+    const corr = new Array(size).fill(0);
+    for (let lag=0;lag<size;lag++) {
+      for (let i=0;i<size-lag;i++) corr[lag] += buf[i]*buf[i+lag];
+    }
+    let d=0;
+    while (d+1<size && corr[d]>corr[d+1]) d++;
+    let maxVal=-1, bestLag=-1;
+    for (let lag=d;lag<size;lag++) {
+      if (corr[lag]>maxVal) { maxVal=corr[lag]; bestLag=lag; }
+    }
+    if (bestLag <= 0) return -1;
+    let lag=bestLag;
+    if (lag>0 && lag<size-1) {
+      const a=corr[lag-1], b=corr[lag], c=corr[lag+1];
+      const denom = 2*b-a-c;
+      if (denom) lag += (c-a)/(2*denom);
+    }
+    return sampleRate/lag;
+  }
+  function detect() {
+    if (!listening || !analyser || current >= 8) return;
+    const buf = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(buf);
+    const hz = autoCorrelate(buf, audioContext.sampleRate);
+    if (hz > 80 && hz < 1800) {
+      const midi = Math.round(69 + 12*Math.log2(hz/440));
+      const cents = 1200*Math.log2(hz/frequency(midi));
+      const targetMidi = rootMidi + swaras[current].offset;
+      // Match the note name/pitch class, regardless of octave.
+      const detectedPitchClass = ((midi % 12) + 12) % 12;
+      const targetPitchClass = ((targetMidi % 12) + 12) % 12;
+      const centsFromNearestSemitone = 1200*Math.log2(hz/frequency(midi));
+      const closeness = Math.max(0, 1-Math.abs(centsFromNearestSemitone)/100);
+      $('meter').style.width = `${closeness*100}%`;
+      if (detectedPitchClass === targetPitchClass && Math.abs(centsFromNearestSemitone) <= 45) {
+        stableFrames++;
+        setFeedback(`✓ Correct note! ${names[((midi%12)+12)%12]} — hold it steady…`, 'good');
+        if (stableFrames >= 9) {
+          noteWrap.children[current].classList.remove('active');
+          noteWrap.children[current].classList.add('done');
+          current++;
+          stableFrames = 0;
+          renderNotes();
+          if (current >= 8) {
+            stopListening();
+            return;
+          }
+        }
+      } else {
+        stableFrames = 0;
+        const direction = centsFromNearestSemitone > 0 ? 'sharper' : 'flatter';
+        setFeedback(`${names[detectedPitchClass]} detected — tune a little ${direction}.`, 'bad');
+      }
+    } else {
+      stableFrames = 0;
+      $('meter').style.width = '0%';
+      setFeedback('Listening… play one clear, steady flute note.');
+    }
+    raf = requestAnimationFrame(detect);
+  }
+  async function startListening() {
+    if (listening) return;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      await audioContext.resume();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 4096;
+      source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      listening = true;
+      $('dot').classList.add('live');
+      $('status').textContent = 'Listening to your flute';
+      $('start').textContent = 'Listening…';
+      setFeedback('Play the highlighted swara and hold it steady.');
+      detect();
+    } catch (e) {
+      setFeedback('Microphone access was blocked. Allow it in your browser settings, then try again.', 'bad');
+      $('status').textContent = 'Could not access microphone';
+    }
+  }
+  function stopListening() {
+    listening = false;
+    if (raf) cancelAnimationFrame(raf);
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (audioContext && audioContext.state !== 'closed') audioContext.close();
+    stream = audioContext = analyser = source = null;
+    $('dot').classList.remove('live');
+    $('status').textContent = 'Microphone is off';
+    $('start').textContent = 'Start listening';
+    $('start').disabled = current >= 8;
+  }
+  $('start').addEventListener('click', startListening);
+  $('reset').addEventListener('click', () => {
+    stopListening(); current = 0; stableFrames = 0;
+    $('meter').style.width = '0%'; renderNotes();
+    setFeedback('Press “Start listening” and play a clear, steady note.');
+  });
+  renderNotes();
+})();
+</script>
+</body>
+</html>

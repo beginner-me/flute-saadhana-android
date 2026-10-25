@@ -67,6 +67,7 @@ public class MainActivity extends Activity {
                         Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                     request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
                 } else {
+                    if (pendingWebPermission != null) pendingWebPermission.deny();
                     pendingWebPermission = request;
                     requestMicPermission();
                 }
@@ -76,11 +77,8 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new MicBridge(), "AndroidMic");
         setContentView(webView);
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-        // Ask on first launch so Android shows the native microphone permission dialog.
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestMicPermission();
-        }
+        // No permission request here: a launch-time request collides with the page's own
+        // request and Android cancels one of them. The page triggers it when needed.
     }
 
     private void requestMicPermission() {

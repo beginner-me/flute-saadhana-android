@@ -217,7 +217,7 @@
       setFeedback('Play the highlighted swara and hold it steady.');
       detect();
     } catch (e) {
-      setFeedback('Microphone access was blocked. Tap “Allow microphone”, then press Start listening again.', 'bad');
+      setFeedback('Microphone access was blocked. Tap “Allow microphone”, then press Start listening again. (Error: ' + (e && e.name) + (e && e.message ? ' – ' + e.message : '') + ')', 'bad');
       $('status').textContent = 'Could not access microphone';
       if (window.AndroidMic) $('allowMic').style.display = '';
     }

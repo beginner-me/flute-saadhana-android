@@ -2,8 +2,12 @@ package com.sravani.flutesaadhana;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -18,6 +22,7 @@ public class MainActivity extends Activity {
     private static final int MIC_PERMISSION_REQUEST = 401;
     private WebView webView;
     private PermissionRequest pendingWebPermission;
+    private boolean askedOnce = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +73,7 @@ public class MainActivity extends Activity {
             }
         });
 
+        webView.addJavascriptInterface(new MicBridge(), "AndroidMic");
         setContentView(webView);
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
         // Ask on first launch so Android shows the native microphone permission dialog.
@@ -81,11 +87,39 @@ public class MainActivity extends Activity {
         requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, MIC_PERMISSION_REQUEST);
     }
 
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", getPackageName(), null));
+        startActivity(intent);
+    }
+
+    // Called from the page's "Allow microphone" button.
+    private class MicBridge {
+        @JavascriptInterface
+        public void requestMic() {
+            runOnUiThread(() -> {
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                // After a "don't ask again" denial Android won't show the dialog, so go to Settings.
+                if (askedOnce && !shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
+                    openAppSettings();
+                } else {
+                    requestMicPermission();
+                }
+            });
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == MIC_PERMISSION_REQUEST && pendingWebPermission != null) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode != MIC_PERMISSION_REQUEST) return;
+        askedOnce = true;
+        boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (pendingWebPermission != null) {
+            if (granted) {
                 pendingWebPermission.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
             } else {
                 pendingWebPermission.deny();

@@ -78,6 +78,7 @@
       <div class="actions">
         <button class="primary" id="start">Start listening</button>
         <button class="secondary" id="reset">Start again</button>
+        <button class="secondary" id="allowMic" style="display:none">Allow microphone</button>
       </div>
       <div class="status"><span class="dot" id="dot"></span><span id="status">Microphone is off</span></div>
     </div>
@@ -216,10 +217,14 @@
       setFeedback('Play the highlighted swara and hold it steady.');
       detect();
     } catch (e) {
-      setFeedback('Microphone access was blocked. Allow it in your browser settings, then try again.', 'bad');
+      setFeedback('Microphone access was blocked. Tap “Allow microphone”, then press Start listening again.', 'bad');
       $('status').textContent = 'Could not access microphone';
+      if (window.AndroidMic) $('allowMic').style.display = '';
     }
   }
+  $('allowMic').addEventListener('click', () => {
+    if (window.AndroidMic) AndroidMic.requestMic();
+  });
   function stopListening() {
     listening = false;
     if (raf) cancelAnimationFrame(raf);

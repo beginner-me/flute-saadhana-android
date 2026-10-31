@@ -50,7 +50,11 @@
   .status { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; color:var(--muted); margin-top:18px; }
   .dot { width:8px; height:8px; border-radius:50%; background:#b7b6c5; }
   .dot.live { background:var(--green); box-shadow:0 0 0 4px #18a66a20; }
+  .lessons { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
+  .lesson-btn { background:#fff; border:1.5px solid var(--line); color:var(--ink); }
+  .lesson-btn.active { border-color:var(--purple); background:#f4f1ff; color:#5044b5; }
   @media(max-width:560px) { main{padding-top:22px}.notes{grid-template-columns:repeat(4,minmax(0,1fr))}.note{padding:12px 2px}.panel{border-radius:20px} }
+  .notes.four { grid-template-columns:repeat(4,minmax(0,1fr)); max-width:480px; margin-left:auto; margin-right:auto; }
 </style>
 </head>
 <body>
@@ -59,14 +63,15 @@
   <section class="intro">
     <h1>Find your note.<br>Play with confidence.</h1>
     <p>Play the swara on your flute. Match the pitch to turn the note green.</p>
+    <div class="lessons" id="lessons"></div>
   </section>
   <section class="panel">
     <div class="settings">
       <div class="setting"><small>SHRUTHI</small><strong>D# (Sa)</strong></div>
       <div class="setting"><small>TEMPO</small><strong>♩ 60 BPM</strong></div>
-      <div class="setting"><small>SEQUENCE</small><strong>S R G M P D N S</strong></div>
+      <div class="setting"><small>SEQUENCE</small><strong id="sequence">S R G M P D N S</strong></div>
     </div>
-    <div class="progress-head"><span>Your swara journey</span><strong id="count">0 / 8 correct</strong></div>
+    <div class="progress-head"><span id="journey">Your swara journey</span><strong id="count">0 / 8 correct</strong></div>
     <div class="track"><div class="bar" id="progress"></div></div>
     <div class="notes" id="notes"></div>
     <div class="center">
@@ -88,15 +93,29 @@
 <script>
 (() => {
   // D# as Sa; relative swaras use semitone offsets 0, 2, 4, 5, 7, 9, 11, 12.
-  const swaras = [
-    {name:'S', full:'Sa', offset:0}, {name:'R', full:'Ri', offset:2},
-    {name:'G', full:'Ga', offset:4}, {name:'M', full:'Ma', offset:5},
-    {name:'P', full:'Pa', offset:7}, {name:'D', full:'Dha', offset:9},
-    {name:'N', full:'Ni', offset:11}, {name:'S', full:'Sa', offset:12}
+  // Matching is by pitch class, so upper and lower Sa are the same swara here.
+  const swaraMap = {
+    S:{full:'Sa', offset:0}, R:{full:'Ri', offset:2}, G:{full:'Ga', offset:4}, M:{full:'Ma', offset:5},
+    P:{full:'Pa', offset:7}, D:{full:'Dha', offset:9}, N:{full:'Ni', offset:11}
+  };
+  const row = s => s.split(' ');
+  const lessons = [
+    {id:'swara', name:'Swara basics', rows:[row('S R G M P D N S')]},
+    {id:'eka', name:'Eka Talam', rows:[
+      row('S R G M'), row('R G M P'), row('G M P D'), row('M P D N'), row('P D N S'),
+      row('S N D P'), row('N D P M'), row('D P M G'), row('P M G R'), row('M G R S')
+    ]}
   ];
   const rootMidi = 63; // D#4
   const names = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
-  let current = 0, audioContext, analyser, source, stream, raf, stableFrames = 0, listening = false, lastMatch = false;
+  let lesson = lessons[0], steps = [], total = 0;
+  function buildSteps() {
+    steps = [];
+    lesson.rows.forEach((r, ri) => r.forEach((n, pi) => steps.push({row:ri, pos:pi, name:n})));
+    total = steps.length;
+  }
+  buildSteps();
+  let needRelease = false, current = 0, audioContext, analyser, source, stream, raf, stableFrames = 0, listening = false, lastMatch = false;
   const $ = id => document.getElementById(id);
   const noteWrap = $('notes');
 
@@ -108,15 +127,21 @@
   function frequency(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
   function renderNotes() {
     noteWrap.innerHTML = '';
-    swaras.forEach((s, i) => {
+    const rowIdx = current < total ? steps[current].row : lesson.rows.length - 1;
+    const notes = lesson.rows[rowIdx];
+    const posNow = current < total ? steps[current].pos : notes.length;
+    noteWrap.className = 'notes' + (notes.length === 4 ? ' four' : '');
+    notes.forEach((n, i) => {
       const el = document.createElement('div');
-      el.className = 'note' + (i < current ? ' done' : '') + (i === current && current < 8 ? ' active' : '');
-      el.innerHTML = `<b>${s.name}</b><small>${names[((rootMidi+s.offset)%12+12)%12]}</small>`;
+      el.className = 'note' + (i < posNow ? ' done' : '') + (i === posNow && current < total ? ' active' : '');
+      el.innerHTML = `<b>${n}</b><small>${names[((rootMidi+swaraMap[n].offset)%12+12)%12]}</small>`;
       noteWrap.appendChild(el);
     });
-    $('count').textContent = `${current} / 8 correct`;
-    $('progress').style.width = `${current/8*100}%`;
-    if (current >= 8) {
+    $('sequence').textContent = notes.join(' ');
+    $('journey').textContent = lesson.rows.length > 1 ? `${lesson.name} · Line ${rowIdx+1} of ${lesson.rows.length}` : 'Your swara journey';
+    $('count').textContent = `${current} / ${total} correct`;
+    $('progress').style.width = `${current/total*100}%`;
+    if (current >= total) {
       $('target').textContent = '🎉';
       $('targetSub').textContent = 'All swaras completed!';
       $('feedback').textContent = 'Excellent! You played the full sequence correctly.';
@@ -124,8 +149,9 @@
       $('start').textContent = listening ? 'Listening…' : 'Start listening';
       $('start').disabled = true;
     } else {
-      $('target').textContent = swaras[current].name;
-      $('targetSub').textContent = `${names[((rootMidi+swaras[current].offset)%12+12)%12]} · ${swaras[current].full}`;
+      const sw = swaraMap[steps[current].name];
+      $('target').textContent = steps[current].name;
+      $('targetSub').textContent = `${names[((rootMidi+sw.offset)%12+12)%12]} · ${sw.full}`;
       $('start').disabled = false;
     }
   }
@@ -160,30 +186,33 @@
     return sampleRate/lag;
   }
   function detect() {
-    if (!listening || !analyser || current >= 8) return;
+    if (!listening || !analyser || current >= total) return;
     const buf = new Float32Array(analyser.fftSize);
     analyser.getFloatTimeDomainData(buf);
     const hz = autoCorrelate(buf, audioContext.sampleRate);
     if (hz > 80 && hz < 1800) {
       const midi = Math.round(69 + 12*Math.log2(hz/440));
       const cents = 1200*Math.log2(hz/frequency(midi));
-      const targetMidi = rootMidi + swaras[current].offset;
+      const targetMidi = rootMidi + swaraMap[steps[current].name].offset;
       // Match the note name/pitch class, regardless of octave.
       const detectedPitchClass = ((midi % 12) + 12) % 12;
       const targetPitchClass = ((targetMidi % 12) + 12) % 12;
       const centsFromNearestSemitone = 1200*Math.log2(hz/frequency(midi));
       const closeness = Math.max(0, 1-Math.abs(centsFromNearestSemitone)/100);
       $('meter').style.width = `${closeness*100}%`;
-      if (detectedPitchClass === targetPitchClass && Math.abs(centsFromNearestSemitone) <= 45) {
+      if (detectedPitchClass !== targetPitchClass) needRelease = false;
+      if (needRelease) {
+        stableFrames = 0;
+        setFeedback('Good — lift your breath briefly, then play the next note.');
+      } else if (detectedPitchClass === targetPitchClass && Math.abs(centsFromNearestSemitone) <= 45) {
         stableFrames++;
         setFeedback(`✓ Correct note! ${names[((midi%12)+12)%12]} — hold it steady…`, 'good');
         if (stableFrames >= 9) {
-          noteWrap.children[current].classList.remove('active');
-          noteWrap.children[current].classList.add('done');
           current++;
           stableFrames = 0;
+          needRelease = true;
           renderNotes();
-          if (current >= 8) {
+          if (current >= total) {
             stopListening();
             return;
           }
@@ -195,6 +224,7 @@
       }
     } else {
       stableFrames = 0;
+      needRelease = false;
       $('meter').style.width = '0%';
       setFeedback('Listening… play one clear, steady flute note.');
     }
@@ -234,7 +264,25 @@
     $('dot').classList.remove('live');
     $('status').textContent = 'Microphone is off';
     $('start').textContent = 'Start listening';
-    $('start').disabled = current >= 8;
+    $('start').disabled = current >= total;
+  }
+  function renderLessons() {
+    const wrap = $('lessons');
+    wrap.innerHTML = '';
+    lessons.forEach(l => {
+      const b = document.createElement('button');
+      b.className = 'lesson-btn' + (l === lesson ? ' active' : '');
+      b.textContent = l.name;
+      b.addEventListener('click', () => {
+        if (l === lesson) return;
+        stopListening();
+        lesson = l; buildSteps(); current = 0; stableFrames = 0;
+        $('meter').style.width = '0%';
+        renderLessons(); renderNotes();
+        setFeedback('Press “Start listening” and play a clear, steady note.');
+      });
+      wrap.appendChild(b);
+    });
   }
   $('start').addEventListener('click', startListening);
   $('reset').addEventListener('click', () => {
@@ -242,6 +290,7 @@
     $('meter').style.width = '0%'; renderNotes();
     setFeedback('Press “Start listening” and play a clear, steady note.');
   });
+  renderLessons();
   renderNotes();
 })();
 </script>

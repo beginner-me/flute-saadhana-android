@@ -24,10 +24,11 @@
   .progress-head { display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--muted); font-size:.88rem; margin-bottom:12px; }
   .track { height:6px; border-radius:99px; background:#eeedf5; overflow:hidden; margin-bottom:26px; }
   .bar { height:100%; width:0%; background:var(--purple); transition:width .25s ease; }
-  .notes { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:9px; margin-bottom:24px; }
-  .note { border:1.5px solid var(--line); border-radius:16px; padding:15px 2px 13px; text-align:center; background:#fff; transition:all .18s; }
-  .note b { display:block; font-size:clamp(1.1rem,3vw,1.5rem); }
-  .note small { color:var(--muted); font-size:.68rem; display:block; margin-top:5px; }
+  .notes { --n:8; display:grid; grid-template-columns:repeat(var(--cols,8),minmax(0,1fr)); gap:min(9px,1.2vw); margin-bottom:24px; }
+  .note { border:1.5px solid var(--line); border-radius:16px; padding:calc(var(--fs) * .6) 1px calc(var(--fs) * .5); min-width:0; text-align:center; background:#fff; transition:all .18s; }
+  .notes { --fs:min(1.5rem, calc((min(920px,94vw) - 64px) / var(--n) / 1.7)); }
+  .note b { display:block; font-size:var(--fs); white-space:nowrap; }
+  .note small { color:var(--muted); font-size:calc(var(--fs) * .45); white-space:nowrap; display:block; margin-top:5px; }
   .note.active { border-color:var(--purple); background:#f4f1ff; box-shadow:0 0 0 3px #6657d91a; transform:translateY(-2px); }
   .note.done { background:#e7fbf1; border-color:#7bd9ae; color:#087c4b; }
   .note.done small { color:#16855a; }
@@ -50,21 +51,28 @@
   .status { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; color:var(--muted); margin-top:18px; }
   .dot { width:8px; height:8px; border-radius:50%; background:#b7b6c5; }
   .dot.live { background:var(--green); box-shadow:0 0 0 4px #18a66a20; }
-  .lessons { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:18px; }
-  .lesson-btn { background:#fff; border:1.5px solid var(--line); color:var(--ink); }
-  .lesson-btn.active { border-color:var(--purple); background:#f4f1ff; color:#5044b5; }
-  @media(max-width:560px) { main{padding-top:22px}.notes{grid-template-columns:repeat(4,minmax(0,1fr))}.note{padding:12px 2px}.panel{border-radius:20px} }
-  .notes.four { grid-template-columns:repeat(4,minmax(0,1fr)); max-width:480px; margin-left:auto; margin-right:auto; }
+  .lessons { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:8px; }
+  .lesson-card { text-align:left; background:#fff; border:1.5px solid var(--line); color:var(--ink); border-radius:20px; padding:20px; box-shadow:0 10px 30px #3930640b; }
+  .lesson-card:hover { border-color:var(--purple); background:#f4f1ff; }
+  .lesson-card h3 { margin:0 0 6px; font-size:1.15rem; }
+  .lesson-card p { margin:0; color:var(--muted); font-size:.85rem; font-weight:500; }
+  .back { background:#f2f0fb; color:#5044b5; margin-bottom:16px; padding:10px 16px; }
+  .hidden { display:none !important; }
+  @media(max-width:560px) { main{padding-top:22px}.note{padding:12px 2px}.panel{border-radius:20px} }
 </style>
 </head>
 <body>
 <main>
   <header><div class="brand">♪ <span>Flute Saadhana</span></div><div class="pill">SHRUTHI · D#</div></header>
-  <section class="intro">
-    <h1>Find your note.<br>Play with confidence.</h1>
-    <p>Play the swara on your flute. Match the pitch to turn the note green.</p>
+  <section id="home">
+    <div class="intro">
+      <h1>Lessons</h1>
+      <p>Choose a lesson to start practising.</p>
+    </div>
     <div class="lessons" id="lessons"></div>
   </section>
+  <section id="practice" class="hidden">
+  <button class="back" id="back">← Lessons</button>
   <section class="panel">
     <div class="settings">
       <div class="setting"><small>SHRUTHI</small><strong>D# (Sa)</strong></div>
@@ -89,6 +97,7 @@
     </div>
   </section>
   <p class="hint">Use headphones only if they don't block your flute sound; keep your flute close to the microphone and play one note at a time. Allow microphone access when your browser asks. Pitch detection works best in a quiet room. This page listens locally in your browser.</p>
+  </section>
 </main>
 <script>
 (() => {
@@ -96,14 +105,26 @@
   // Matching is by pitch class, so upper and lower Sa are the same swara here.
   const swaraMap = {
     S:{full:'Sa', offset:0}, R:{full:'Ri', offset:2}, G:{full:'Ga', offset:4}, M:{full:'Ma', offset:5},
-    P:{full:'Pa', offset:7}, D:{full:'Dha', offset:9}, N:{full:'Ni', offset:11}
+    P:{full:'Pa', offset:7}, D:{full:'Dha', offset:9}, N:{full:'Ni', offset:11}, 'Ṡ':{full:'Sa', offset:12}
   };
   const row = s => s.split(' ');
   const lessons = [
     {id:'swara', name:'Swara basics', rows:[row('S R G M P D N S')]},
     {id:'eka', name:'Eka Talam', rows:[
-      row('S R G M'), row('R G M P'), row('G M P D'), row('M P D N'), row('P D N S'),
-      row('S N D P'), row('N D P M'), row('D P M G'), row('P M G R'), row('M G R S')
+      row('S R G M'), row('R G M P'), row('G M P D'), row('M P D N'), row('P D N Ṡ'),
+      row('Ṡ N D P'), row('N D P M'), row('D P M G'), row('P M G R'), row('M G R S')
+    ]},
+    {id:'triputa', name:'Triputa Talam', rows:[
+      row('S R G S R G M'), row('R G M R G M P'), row('G M P G M P D'), row('M P D M P D N'), row('P D N P D N Ṡ'),
+      row('Ṡ N D Ṡ N D P'), row('N D P N D P M'), row('D P M D P M G'), row('P M G P M G R'), row('M G R M G R S')
+    ]},
+    {id:'rupaka', name:'Rupaka Talam', rows:[
+      row('S R S R G M'), row('R G R G M P'), row('G M G M P D'), row('M P M P D N'), row('P D P D N Ṡ'),
+      row('Ṡ N Ṡ N D P'), row('N D N D P M'), row('D P D P M G'), row('P M P M G R'), row('M G M G R S')
+    ]},
+    {id:'matya', name:'Matya Talam', rows:[
+      row('S R G R S R S R G M'), row('R G M G R G R G M P'), row('G M P M G M G M P D'), row('M P D P M P M P D N'), row('P D N D P D P D N Ṡ'),
+      row('Ṡ N D N Ṡ N Ṡ N D P'), row('N D P D N D N D P M'), row('D P M P D P D P M G'), row('P M G M P M P M G R'), row('M G R G M G M G R S')
     ]}
   ];
   const rootMidi = 63; // D#4
@@ -130,7 +151,9 @@
     const rowIdx = current < total ? steps[current].row : lesson.rows.length - 1;
     const notes = lesson.rows[rowIdx];
     const posNow = current < total ? steps[current].pos : notes.length;
-    noteWrap.className = 'notes' + (notes.length === 4 ? ' four' : '');
+    noteWrap.className = 'notes';
+    noteWrap.style.setProperty('--cols', notes.length);
+    noteWrap.style.setProperty('--n', notes.length);
     notes.forEach((n, i) => {
       const el = document.createElement('div');
       el.className = 'note' + (i < posNow ? ' done' : '') + (i === posNow && current < total ? ' active' : '');
@@ -271,19 +294,25 @@
     wrap.innerHTML = '';
     lessons.forEach(l => {
       const b = document.createElement('button');
-      b.className = 'lesson-btn' + (l === lesson ? ' active' : '');
-      b.textContent = l.name;
+      b.className = 'lesson-card';
+      const lines = l.rows.length;
+      b.innerHTML = `<h3>${l.name}</h3><p>${lines > 1 ? lines + ' lines · ' : ''}${l.rows[0].length} notes${lines > 1 ? ' per line' : ''}</p>`;
       b.addEventListener('click', () => {
-        if (l === lesson) return;
         stopListening();
         lesson = l; buildSteps(); current = 0; stableFrames = 0;
         $('meter').style.width = '0%';
-        renderLessons(); renderNotes();
+        renderNotes();
         setFeedback('Press “Start listening” and play a clear, steady note.');
+        $('home').classList.add('hidden'); $('practice').classList.remove('hidden');
+        window.scrollTo(0, 0);
       });
       wrap.appendChild(b);
     });
   }
+  $('back').addEventListener('click', () => {
+    stopListening();
+    $('practice').classList.add('hidden'); $('home').classList.remove('hidden');
+  });
   $('start').addEventListener('click', startListening);
   $('reset').addEventListener('click', () => {
     stopListening(); current = 0; stableFrames = 0;
